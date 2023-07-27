@@ -1,0 +1,15 @@
+{
+    "APN_GPRS": "claro.com.br",
+    "APNUser" : "claro",
+    "APNPassword" : "claro",
+    "MQTTHost" : "0.tcp.sa.ngrok.io",
+    "MQTTUsername" : "Whistleblower",
+    "MQTTPassword" : "FB)TKqR#C@Jw7TTc",
+    "MQTTPort" : 13281,
+    "MQTTclientID" : "MotoTesteTCC",
+    "MQTTProject": "Whistleblower",
+    "STA_SSID" : "Unicon 2.4_Juliana",
+    "STA_PSW" : "99061012",
+    "AP_SSID" : "TCU_TCC_Mateus",
+    "AP_PSW" : "tcc_mateus"
+}

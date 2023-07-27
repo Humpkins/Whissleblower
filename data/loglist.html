@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        button {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            text-decoration: underline;
+        }
+
+        img {
+            height: 20px;
+        }
+
+        label {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<script>
+    const createLi = (name, size) => {
+        let btn_name = document.createElement('button');
+        let btn_trash = document.createElement('button');
+        let img_trash = document.createElement('img');
+        let label_size = document.createElement('label');
+        let li = document.createElement('li');
+
+        btn_name.textContent = name;
+        btn_name.onclick = () => {
+            var url = new URL("http://whistleblower.local/download");
+            url.search = new URLSearchParams({ name }).toString();
+            fetch(
+                url,
+                { method: 'GET' }
+            )
+            .then(response => response.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.style.display = "none";
+                a.href = url;
+                a.download = name;
+                document.body.appendChild(a);
+                a.click();
+                URL.revokeObjectURL();
+            });
+        }
+
+        img_trash.setAttribute("src", "trash.svg");
+        btn_trash.appendChild(img_trash);
+        btn_trash.onclick = () => {
+            var url = new URL("http://whistleblower.local/delete");
+            url.search = new URLSearchParams({ name }).toString();
+            fetch(
+                url,
+                { method: 'DELETE' }
+            ).then(({ status }) => (status === 200) ? btn_trash.parentNode.remove() : alert("It was not possible to delete this file from ESP"));
+        }
+
+        label_size.textContent = size;
+        li.appendChild(btn_name);
+        li.appendChild(label_size);
+        li.appendChild(btn_trash);
+
+        return li;
+    }
+
+    const atualizar = () =>
+        fetch(
+            'http://whistleblower.local/logData',
+            { method: 'GET' }
+        )
+        .then(response => response.json())
+        .then(response => {
+            let ulElement = document.getElementById("list");
+            const { logsNames } = response;
+            const uniqueLogsNames = logsNames.filter((obj, index, self) => {
+                return index === self.findIndex((t) => {
+                    return t.name === obj.name && t.size === obj.size;
+                });
+            });
+
+            uniqueLogsNames.map(({ name, size }) => ulElement.appendChild(createLi(name, size)));
+
+        });
+
+    atualizar();
+</script>
+
+<body>
+    <ul id="list"></ul>
+</body>
+</html>

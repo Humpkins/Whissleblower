@@ -1,0 +1,17 @@
+{
+    "Latitude": -8.186256409,
+    "Longitude": -34.92202759,
+    "GPS_Speed": 0,
+    "Altitude": 4.699999809,
+    "Orientation": 0,
+    "SatelitesInViewGNSS": 21,
+    "SatelitesInUseGPS": 6,
+    "SatelitesInUseGLONASS": 2,
+    "GPRS_SingalQuality": 21,
+    "GPRS_Operational_Mode": "GSM",
+    "cellID": 20075,
+    "MCC": 724,
+    "MNC": 5,
+    "LAC": "0x1695",
+    "Firmware_Ver": "1.0.1"
+}

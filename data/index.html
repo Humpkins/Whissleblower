@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="global.css">
+    <title>Whistleblower</title>
+</head>
+
+<style>
+    header {
+        background-color: #4CAF50;
+        color: white;
+        text-align: center;
+        padding: 10px;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-top: 50px;
+    }
+
+    .APN, .MQTT, .WiFi {
+        display: flex;
+        flex-direction: column;
+        margin-top: 20px;
+    }
+
+    .APN label, .MQTT label, .WiFi label {
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .APN input, .MQTT input, .WiFi input {
+        margin-bottom: 10px;
+        padding: 5px;
+        width: 300px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    .MQTT input[type="number"] {
+        width: 100px;
+    }
+
+    button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        margin-top: 20px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    button:hover {
+        background-color: #2E8B57;
+    }
+
+    .toLogList {
+        margin-top: 50px;
+        background-color: #008CBA;
+    }
+
+    .toLogList:hover {
+        background-color: #0077A3;
+    }
+
+    .btn_container {
+        display: flex;
+        justify-content: space-between;
+        width: 300px;
+    }
+
+</style>
+
+<script>
+    let params = {};
+
+    const atualizar = () =>
+        fetch(
+            'http://whistleblower.local/info', { method: 'GET'}
+        )
+        .then( response => response.json() )
+        .then( response => {
+
+            console.log(response);
+
+            const apnHost = document.querySelector('.APN>input:nth-of-type(1)');
+            
+            const apnUser = document.querySelector('.APN>input:nth-of-type(2)');
+            
+            const apnPass = document.querySelector('.APN>input:nth-of-type(3)');
+            
+            
+            const mqttHost = document.querySelector('.MQTT>input:nth-of-type(1)');
+            
+            const mqttUser = document.querySelector('.MQTT>input:nth-of-type(2)');
+            
+            const mqttPass = document.querySelector('.MQTT>input:nth-of-type(3)');
+            
+            const mqttPort = document.querySelector('.MQTT>input:nth-of-type(4)');
+            
+            const mqttID = document.querySelector('.MQTT>input:nth-of-type(5)');
+            
+            const mqttProj = document.querySelector('.MQTT>input:nth-of-type(6)');
+            
+
+            const wiFiSTASSID = document.querySelector('.WiFi>input:nth-of-type(1)');
+            
+            const wiFiSTAPass = document.querySelector('.WiFi>input:nth-of-type(2)');
+            
+            const wiFiAPSSID = document.querySelector('.WiFi>input:nth-of-type(3)');
+            
+            const wiFiAPPass = document.querySelector('.WiFi>input:nth-of-type(4)');
+            
+
+            params = {
+                APN_GPRS: response.APN.host,
+                APNUser: response.APN.user,
+                APNPassword: response.APN.password,
+                MQTTHost: response.MQTT.host,
+                MQTTUsername: response.MQTT.user,
+                MQTTPassword: response.MQTT.password,
+                MQTTclientID: response.MQTT.ID,
+                MQTTProject: response.MQTT.project,
+                MQTTPort: response.MQTT.port,
+                STA_SSID: response.WiFi.STA.ssid,
+                STA_PSW: response.WiFi.STA.password,
+                AP_SSID: response.WiFi.AP.ssid,
+                AP_PSW: response.WiFi.AP.password
+            };
+
+            apnHost.value = params.APN_GPRS;
+            apnUser.value = params.APNUser;
+            apnPass.value = params.APNPassword;
+        
+            mqttHost.value = params.MQTTHost;
+            mqttUser.value = params.MQTTUsername;
+            mqttPass.value = params.MQTTPassword;
+            mqttPort.value = params.MQTTPort;
+            mqttID.value = params.MQTTclientID;
+            mqttProj.value = params.MQTTProject;
+
+            wiFiSTASSID.value = params.STA_SSID;
+            wiFiSTAPass.value = params.STA_PSW;
+            wiFiAPSSID.value = params.AP_SSID;
+            wiFiAPPass.value = params.AP_PSW;
+            
+
+            apnHost.addEventListener( "change", () => (params.APN_GPRS = apnHost.value) );
+            apnUser.addEventListener( "change", () => (params.APNUser = apnUser.value) );
+            apnPass.addEventListener( "change", () => (params.APNPassword = apnPass.value) );
+            mqttHost.addEventListener( "change", () => (params.MQTTHost = mqttHost.value) );
+            mqttUser.addEventListener( "change", () => (params.MQTTUsername = mqttUser.value) );
+            mqttPass.addEventListener( "change", () => (params.MQTTPassword = mqttPass.value) );
+            mqttPort.addEventListener( "change", () => (params.MQTTPort = mqttPort.value) );
+            mqttID.addEventListener( "change", () => (params.MQTTclientID = mqttID.value) );
+            mqttProj.addEventListener( "change", () => (params.MQTTProject = mqttProj.value) );
+            wiFiSTASSID.addEventListener( "change", () => (params.STA_SSID = wiFiSTASSID.value) );
+            wiFiSTAPass.addEventListener( "change", () => (params.STA_PSW = wiFiSTAPass.value) );
+            wiFiAPSSID.addEventListener( "change", () => (params.AP_SSID = wiFiAPSSID.value) );
+            wiFiAPPass.addEventListener( "change", () => (params.AP_PSW = wiFiAPPass.value) );
+        });
+
+    const submit = () => {
+        const submitURL = new URL("http://whistleblower.local/saveData");
+        Object.keys(params).forEach( key => submitURL.searchParams.append( key, encodeURIComponent(params[key]) ) );
+
+        fetch( submitURL, { method: 'GET'} )
+            .catch( err => {
+                alert(err);
+                history.back();
+            })
+            .then( () => history.back() );
+    }
+
+    atualizar();
+
+</script>
+<body>
+    <header> whistleblower </header>
+
+    <div class="container">
+        <div class="APN">
+            <label> APN Host </label>
+            <input type="text" id="host"/>
+            <label> APN User</label>
+            <input type="text" id="APNUser" />
+            <label> APN Password</label>
+            <input type="text" />
+        </div>
+
+        <div class="MQTT">
+            <label> MQTT Host </label>
+            <input type="text" />
+            <label> MQTT User </label>
+            <input type="text" />
+            <label> MQTT Password </label>
+            <input type="text" />
+            <label> MQTT Port </label>
+            <input type="number" />
+            <label> MQTT ID </label>
+            <input type="text" />
+            <label> MQTT Project </label>
+            <input type="text" />
+        </div>
+
+        <div class="WiFi">
+            <label> WiFi STA SSID </label>
+            <input type="text" />
+            <label> WiFi STA Password </label>
+            <input type="text" />
+            <label> WiFi AP SSID </label>
+            <input type="text" />
+            <label> WiFi AP Password </label>
+            <input type="text" />
+        </div>
+
+        <div class="btn_container">
+            <button onclick="atualizar()"> Read </button>
+            <button onclick="submit()"> Submit </button>
+        </div>
+
+        <a href="loglist.html">
+            <button class="toLogList" > Datalogger </button>
+        </a>
+    </div>
+</body>
+</html>
