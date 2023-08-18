@@ -20,3 +20,5 @@ Design of a Telemetry Control Unit (TCU) using a LILYGO T-SIM7000G, MCP2515 and 
 | Internal settings configuration                     | 9            |
 | Download logged data                                | 10           |
 | Delete logged data                                  | 11           |
+
+https://github.com/Humpkins/Whistleblower/assets/50257157/a2c75d3d-6d58-4009-bb95-e40281f73e24
