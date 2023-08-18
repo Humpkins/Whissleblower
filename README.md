@@ -3,8 +3,9 @@ Design of a Telemetry Control Unit (TCU) using a LILYGO T-SIM7000G, MCP2515 and 
 <br />for the front end interface development, please refer to [Whistleblower Frontend](https://github.com/Humpkins/Whissleblower_Frontend)
 
 ![Group 65 (2)](https://github.com/Humpkins/Whistleblower/assets/50257157/08f10123-6de5-41a2-b9dd-bfe77aec145d)
-![Group 62 (3)](https://github.com/Humpkins/Whistleblower/assets/50257157/387f15bd-6486-41e1-9675-d75b56096ef2)
+![Group 62 (2)](https://github.com/Humpkins/Whistleblower/assets/50257157/c43104bc-8864-4c87-a41c-7459c6ec7e8b)
 ![Group 72 (1)](https://github.com/Humpkins/Whistleblower/assets/50257157/0cef7e6a-6063-4f0a-86a5-4bcedf411836)
+
 
 | Functionality                                       | Identification |
 |------------------------------------------------------|-------------- |
