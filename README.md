@@ -1,6 +1,6 @@
 # Whistleblower
 Design of a Telemetry Control Unit (TCU) using a LILYGO T-SIM7000G, MCP2515 and MPU6050
-![Group 65](https://github.com/Humpkins/Whistleblower/assets/50257157/12d01d21-d141-47b4-b9c9-34dadba063e2)
+![Group 65 (2)](https://github.com/Humpkins/Whistleblower/assets/50257157/08f10123-6de5-41a2-b9dd-bfe77aec145d)
 ![Group 62 (3)](https://github.com/Humpkins/Whistleblower/assets/50257157/387f15bd-6486-41e1-9675-d75b56096ef2)
 ![Group 72 (1)](https://github.com/Humpkins/Whistleblower/assets/50257157/0cef7e6a-6063-4f0a-86a5-4bcedf411836)
 
