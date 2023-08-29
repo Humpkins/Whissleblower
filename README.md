@@ -2,6 +2,8 @@
 Design of a Telemetry Control Unit (TCU) using a LILYGO T-SIM7000G, MCP2515 and MPU6050
 <br />for the front end interface development, please refer to [Whistleblower Frontend](https://github.com/Humpkins/Whissleblower_Frontend)
 
+This device is capable of intercept the vehicle comunication and send some key metrics to a remote server. The Front-End software then retrieve this information and displays on a user-friedly web page.
+
 <br />The landing page. Here you can see all the connected devices and choose which one you want to see the details
 ![Group 65 (2)](https://github.com/Humpkins/Whistleblower/assets/50257157/08f10123-6de5-41a2-b9dd-bfe77aec145d)
 <br /><br /><br />On the detail page, you can check the states of the vehicle, as well as start/stop the datalogging service
