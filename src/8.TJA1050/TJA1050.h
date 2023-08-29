@@ -122,8 +122,8 @@ class TJA1050 {
 
                 f_config.single_filter = false;
                 
-                f_config.acceptance_code = 0x24006000;
-                f_config.acceptance_mask = 0x023F003F;
+                f_config.acceptance_code = BASE_ACC_CODE;
+                f_config.acceptance_mask = BASE_ACC_MSK;
             #endif
 
             ESP_ERROR_CHECK(can_driver_install(&g_config, &t_config, &f_config));
