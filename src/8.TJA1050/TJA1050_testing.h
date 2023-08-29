@@ -168,10 +168,10 @@ class TJA1050 {
 
                     /*  Check if the incomming ID is one of the expected IDs and if this packet was not checked before,
                         then read it's content, save it to the global state and flag this packet as already checked */
-                    if ( rx_frame.FIR.B.RTR != CAN_RTR && ((packetID == g_states.BASE_BATTERY_ID && !already_checked[0] ) || (packetID == g_states.BASE_BATTERY_ID + 1  && !already_checked[1])) ){
+                    if ( rx_frame.FIR.B.RTR != CAN_RTR && ((packetID == BASE_BATTERY_ID && !already_checked[0] ) || (packetID == BASE_BATTERY_ID + 1  && !already_checked[1])) ){
 
                         int8_t index;
-                        if ( packetID == g_states.BASE_BATTERY_ID ) { index = 0; }
+                        if ( packetID == BASE_BATTERY_ID ) { index = 0; }
                         else { index = 1; }
 
                         // Read the BMS1 Data and save it to the gloabl state
@@ -185,7 +185,7 @@ class TJA1050 {
                         // Flag this packet as already checked
                         already_checked[index] = true;
                         
-                    } else if ( rx_frame.FIR.B.RTR != CAN_RTR && packetID == g_states.BASE_CONTROLLER_ID && !already_checked[2] ) {
+                    } else if ( rx_frame.FIR.B.RTR != CAN_RTR && packetID == BASE_CONTROLLER_ID && !already_checked[2] ) {
 
                         // Read the controller data and save it to the gloabl state
                         this->CurrentPowertrainData.motorSpeedRPM         = packetData[0] * (int)pow(16, 2) + packetData[1];
@@ -196,7 +196,7 @@ class TJA1050 {
                         // Flag this packet as already checked
                         already_checked[2] = true;
 
-                    } else if ( rx_frame.FIR.B.RTR != CAN_RTR && packetID == g_states.BASE_CONTROLLER_ID_2 ) {
+                    } else if ( rx_frame.FIR.B.RTR != CAN_RTR && packetID == BASE_CONTROLLER_ID_2 ) {
                         this->MCU_error.hardwareFault1 =            ( packetData[2] & (0x80 >> 0) ) >> (7 - 0);
                         this->MCU_error.motorSensor =               ( packetData[2] & (0x80 >> 1) ) >> (7 - 1);
                         this->MCU_error.overVoltage =               ( packetData[2] & (0x80 >> 2) ) >> (7 - 2);
@@ -216,11 +216,11 @@ class TJA1050 {
                         // Flag this packet as already checked
                         already_checked[3] = true;
 
-                    } else if ( rx_frame.FIR.B.RTR != CAN_RTR && ((packetID == g_states.BASE_BATTERY_ID_2 && !already_checked[4]) || (packetID == g_states.BASE_BATTERY_ID_2 + 1 && !already_checked[5])) ) {
+                    } else if ( rx_frame.FIR.B.RTR != CAN_RTR && ((packetID == BASE_BATTERY_ID_2 && !already_checked[4]) || (packetID == BASE_BATTERY_ID_2 + 1 && !already_checked[5])) ) {
                         
                         int16_t index = 0;
                         int16_t idOffset = 4;
-                        if ( packetID == g_states.BASE_BATTERY_ID_2 ) { index = 0; }
+                        if ( packetID == BASE_BATTERY_ID_2 ) { index = 0; }
                         else { index = 1; }
 
                         this->BMS_Error[index].W_cell_chg =                        ( packetData[0] & (0x80 >> 0) ) >> (7 - 0);

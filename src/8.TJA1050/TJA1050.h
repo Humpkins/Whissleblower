@@ -161,10 +161,10 @@ class TJA1050 {
                         printf("\n");
                     #endif
 
-                    if ( (packetId == g_states.BASE_BATTERY_ID && !already_checked[0]) || (packetId == g_states.BASE_BATTERY_ID + 1 && !already_checked[1]) ) {
+                    if ( (packetId == BASE_BATTERY_ID && !already_checked[0]) || (packetId == BASE_BATTERY_ID + 1 && !already_checked[1]) ) {
                         
                         int16_t index = 0;
-                        if ( packetId == g_states.BASE_BATTERY_ID ) { index = 0; }
+                        if ( packetId == BASE_BATTERY_ID ) { index = 0; }
                         else { index = 1; }
 
                         // Read the BMS1 Data and save it to the gloabl state
@@ -177,7 +177,7 @@ class TJA1050 {
                         // Flag this packet as already checked
                         already_checked[index] = true;
 
-                    } else if ( packetId == g_states.BASE_CONTROLLER_ID && !already_checked[2] ) {
+                    } else if ( packetId == BASE_CONTROLLER_ID && !already_checked[2] ) {
 
                         // Read the controller data and save it to the gloabl state
                         this->CurrentPowertrainData.motorSpeedRPM         = packetData[0] * (int)pow(16, 2) + packetData[1];
@@ -188,7 +188,7 @@ class TJA1050 {
                         // Flag this packet as already checked
                         already_checked[2] = true;
 
-                    } else if ( packetId == g_states.BASE_CONTROLLER_ID_2 && !already_checked[3] ) {
+                    } else if ( packetId == BASE_CONTROLLER_ID_2 && !already_checked[3] ) {
 
                         this->MCU_error.hardwareFault1 = ( packetData[2] & (0x80 >> 0) ) >> (7 - 0);
                         this->MCU_error.motorSensor = ( packetData[2] & (0x80 >> 1) ) >> (7 - 1);
@@ -206,11 +206,11 @@ class TJA1050 {
                         this->MCU_error.motorTempSensShort = ( packetData[3] & (0x80 >> 5) ) >> (7 - 5);
                         this->MCU_error.motorTempSensOpen = ( packetData[3] & (0x80 >> 6) ) >> (7 - 6);
 
-                    } else if ( (packetId == g_states.BASE_BATTERY_ID_2 && !already_checked[4]) || (packetId == g_states.BASE_BATTERY_ID_2 + 1 && !already_checked[5]) ) {
+                    } else if ( (packetId == BASE_BATTERY_ID_2 && !already_checked[4]) || (packetId == BASE_BATTERY_ID_2 + 1 && !already_checked[5]) ) {
                         
                         int16_t index = 0;
                         int16_t idOffset = 4;
-                        if ( packetId == g_states.BASE_BATTERY_ID_2 ) { index = 0; }
+                        if ( packetId == BASE_BATTERY_ID_2 ) { index = 0; }
                         else { index = 1; }
 
                         this->BMS_Error[index].W_cell_chg =                        ( packetData[0] & (0x80 >> 0) ) >> (7 - 0);

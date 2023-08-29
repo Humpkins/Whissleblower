@@ -91,7 +91,7 @@ class MCP2515 {
 
                     /*  Check if the incomming ID is one of the expected IDs and if this packet was not checked before,
                         then read it's content, save it to the global state and flag this packet as already checked */
-                    if ( this->IDs_Data.ID == g_states.BASE_BATTERY_ID && !already_checked[0] ){
+                    if ( this->IDs_Data.ID == BASE_BATTERY_ID && !already_checked[0] ){
 
                         // Read the BMS1 Data and save it to the gloabl state
                         this->batteries[0].current        = (this->IDs_Data.Content_Arr[2] * (int)pow(16, 2) + this->IDs_Data.Content_Arr[3]) * 0.1;
@@ -105,7 +105,7 @@ class MCP2515 {
                         already_checked[0] = true;
                         
 
-                    } else if ( this->IDs_Data.ID == (g_states.BASE_BATTERY_ID + 1) && !already_checked[1] ) {
+                    } else if ( this->IDs_Data.ID == (BASE_BATTERY_ID + 1) && !already_checked[1] ) {
 
                         // Read the BMS2 Data and save it to the gloabl state
                         this->batteries[1]. current       = (this->IDs_Data.Content_Arr[2] * (int)pow(16, 2) + this->IDs_Data.Content_Arr[3]) * 0.1;
