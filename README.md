@@ -1,5 +1,5 @@
 # Whistleblower
-This project aims to develop a Telemetry Control Unit (TCU) using some knoledges in GSM, LTE, GNSS and MQTT.
+This project aims to develop a Telemetry Control Unit (TCU) using some knowledges in GSM, LTE, GNSS and MQTT.
 <br />for the front end interface development, please refer to [Whistleblower Frontend](https://github.com/Humpkins/Whissleblower_Frontend)
 
 This device is capable of intercept the vehicle comunication (CAN) and send some key metrics to a remote server (MQTT). The Front-End software then retrieve this information (WS) and displays on a user-friedly web page.
