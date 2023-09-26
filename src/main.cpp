@@ -27,6 +27,9 @@
 #include "./3.MQTT/MQTT.h"
 #include "./7.Watchers/overcurrent.h"
 
+#include "esp_system.h"
+#include "driver/gpio.h"
+
 #include "./highFrequencyMQTT/highFrequencyMQTT.h"
 #include "./mediumFrequencyMQTT/mediumFrequencyMQTT.h"
 #include "./CANerrorMQTT/CANErrorMQTT.h"
@@ -243,7 +246,12 @@ void taskLoopClientMQTT ( void * parameters ) {
 
             //  Prevent from Idle disconnection
             if ( xTaskGetTickCount() - maintainConnectionUp_Time > (7500 / portTICK_PERIOD_MS) ){
-                if ( !mqtt.publish( wakeTopic, "I'm up..." ) ) reconnect();
+                if ( mqtt.publish( wakeTopic, "I'm up..." ) ){
+                    sim_7000g.last_message = xTaskGetTickCount();
+                } else {
+                    reconnect();
+                    sim_7000g.last_message = xTaskGetTickCount();
+                }
                 maintainConnectionUp_Time = xTaskGetTickCount();
             }
 
@@ -251,6 +259,20 @@ void taskLoopClientMQTT ( void * parameters ) {
         }
 
         vTaskDelay( 1000 / portTICK_PERIOD_MS );
+    }
+}
+
+void taskConnectionStatus ( void * parameters ) {
+    for(;;){
+       if ( sim_7000g.last_message > 0 ){
+            if ( wb.isWissleblowingActive ){
+                if ( (xTaskGetTickCount() - sim_7000g.last_message) * portTICK_PERIOD_MS > 10000) reconnect();
+            } else {
+                if ( (xTaskGetTickCount() - sim_7000g.last_message) * portTICK_PERIOD_MS > 30000) reconnect();
+            }
+            sim_7000g.last_message = xTaskGetTickCount();
+       }
+       vTaskDelay( 5000 );
     }
 }
 
@@ -266,7 +288,7 @@ void taskWebClientObserver ( void * parameters ) {
             if ( (xTaskGetTickCount() - mqtt_com.subscribedLastHeartBeat) > 60000 / portTICK_PERIOD_MS ) {
                 
                 //  Flags that whissleblowing service is now inactive
-                wb.isWissleblowingActive = 0;
+                wb.stopWhistleblowing();
 
                 Serial.print("Suspending the message system due to client's timeout");
 
@@ -335,7 +357,7 @@ void vontageInput ( void * parameter ) {
             sprintf( topic_Wake, "%s/%s/%s", g_states.MQTTProject, g_states.MQTTclientID, g_states.MQTTListenTopic );
 
             Serial.println(message);
-            mqtt.publish(topic_Wake, message);
+            if ( mqtt.publish(topic_Wake, message) ){ sim_7000g.last_message = xTaskGetTickCount(); };
 
             //  Sets up the MPU6050 class
             MPU_DATA.setup();
@@ -350,7 +372,7 @@ void vontageInput ( void * parameter ) {
             sprintf( topic_Wake, "%s/%s/%s", g_states.MQTTProject, g_states.MQTTclientID, g_states.MQTTListenTopic );
 
             Serial.println(message);
-            mqtt.publish(topic_Wake, message);
+            if (mqtt.publish(topic_Wake, message)){ sim_7000g.last_message = xTaskGetTickCount(); };
 
             g_states.VoltageInput = false;
         };
@@ -361,11 +383,11 @@ void vontageInput ( void * parameter ) {
 
 void setup() {
 
+    gpio_set_level(ESP_RST_PIN, 1);
+    gpio_set_direction(ESP_RST_PIN, GPIO_MODE_OUTPUT);
+
     if ( !Serial ) Serial.begin(115200);
     while( !Serial );
-
-    pinMode( ESP_RST_PIN, INPUT );
-    digitalWrite( ESP_RST_PIN, HIGH );
 
     //  Clear flash memory and reset
     utilities.ESPClearFlash();
@@ -408,10 +430,7 @@ void setup() {
     // //  Sendo good morning message
     char topic_Wake[ sizeof(g_states.MQTTProject) + sizeof(g_states.MQTTclientID) + sizeof(g_states.MQTTWakeTopic) + 3 ];
     sprintf( topic_Wake, "%s/%s/%s", g_states.MQTTProject, g_states.MQTTclientID, g_states.MQTTWakeTopic );
-    mqtt.publish( topic_Wake, "Just woke. Good morning!" );
-
-    pinMode( ESP_RST_PIN, OUTPUT );
-    digitalWrite( ESP_RST_PIN, HIGH );
+    if (mqtt.publish( topic_Wake, "Just woke. Good morning!" )){ sim_7000g.last_message = xTaskGetTickCount(); }
 
     xTaskCreatePinnedToCore( TaskMediumFreq, "Medium frequency data task", 4096, NULL, 2, &xMediumFreq, 0 );
     xTaskCreatePinnedToCore( TaskHighFreq, "High frequency data task", 2048, NULL, 2, &xHighFreq, 0 );
@@ -426,6 +445,8 @@ void setup() {
     xTaskCreatePinnedToCore( taskUpdateTimesTamp, "Update board's Timestamp", 2048, NULL, 4, &xRTC, 0 );
     xTaskCreatePinnedToCore( heartBeat, "Blinks the LED", 1024, NULL, 1, &xHeartBeat, 0 );
     xTaskCreatePinnedToCore( taskWebClientObserver, "Watch for web client's timeout", 1024, NULL, 1, &xClientsHeartbeat, 0 );
+    xTaskCreatePinnedToCore( taskConnectionStatus, "Check for internet connection", 2048, NULL, 1, NULL, 0 );
+    
 
     vTaskDelay( 200 / portTICK_PERIOD_MS );
 

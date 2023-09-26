@@ -5,7 +5,7 @@ void customAbort(){
     digitalWrite( ESP_RST_PIN, LOW );
 }
 
-#define abort() customAbort()
+#define abort() customAbort();
 
 TaskHandle_t xClientsHeartbeat;
 TaskHandle_t xMediumFreq;

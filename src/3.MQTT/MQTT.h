@@ -176,21 +176,21 @@ void someoneIsListenToUs(  char * topic, byte * payload, unsigned int length ) {
             switch ( status ) {
                 case 1:
                     Serial.println("        [OK]");
-                    mqtt.publish( topic_Wake, "Yes master! Resuming the message system" );
+                    if ( mqtt.publish( topic_Wake, "Yes master! Resuming the message system" )){ sim_7000g.last_message = xTaskGetTickCount(); }
                     break;
                 case 2:
                     Serial.println("        [FAIL]");
                     Serial.println("Error on opening the whistleblowing service log file");
-                    mqtt.publish( topic_Wake, "Error on opening the whistleblowing service log file" );
+                    if ( mqtt.publish( topic_Wake, "Error on opening the whistleblowing service log file" )){ sim_7000g.last_message = xTaskGetTickCount(); }
                     break;
                 case 0:
                     Serial.println("        [FAIL]");
                     Serial.println("Whistleblowing service is already active");
-                    mqtt.publish( topic_Wake, "Whistleblowing servie is already active" );
+                    if ( mqtt.publish( topic_Wake, "Whistleblowing servie is already active" )){ sim_7000g.last_message = xTaskGetTickCount(); }
                     break;
                 default:
                     Serial.println("        [FAIL]");
-                    mqtt.publish( topic_Wake, "Error on starting the whistleblowing service" );
+                    if ( mqtt.publish( topic_Wake, "Error on starting the whistleblowing service" )){ sim_7000g.last_message = xTaskGetTickCount(); }
                     break;
             }
 
@@ -205,19 +205,19 @@ void someoneIsListenToUs(  char * topic, byte * payload, unsigned int length ) {
             switch( status ) {
                 case 1:
                     Serial.println("        [OK]");
-                    mqtt.publish( topic_Wake, "Yes master! Suspending the message system" );
+                    if ( mqtt.publish( topic_Wake, "Yes master! Suspending the message system" )){ sim_7000g.last_message = xTaskGetTickCount(); }
                 case 2:
                     Serial.println("        [FAIL]");
                     Serial.println("Error on opening the whistleblowing service log file");
-                    mqtt.publish( topic_Wake, "Error on opening the whistleblowing service log file" );
+                    if ( mqtt.publish( topic_Wake, "Error on opening the whistleblowing service log file" )){ sim_7000g.last_message = xTaskGetTickCount(); }
                 case 0:
                     Serial.println("        [FAIL]");
                     Serial.println("Whistleblowing service is already inactive");
-                    mqtt.publish( topic_Wake, "Whistleblowing servie is already inactive" );
+                    if ( mqtt.publish( topic_Wake, "Whistleblowing servie is already inactive" )){ sim_7000g.last_message = xTaskGetTickCount(); }
                     break;
                 default:
                     Serial.println("        [FAIL]");
-                    mqtt.publish( topic_Wake, "Error on starting the whistleblowing service" );
+                    if ( mqtt.publish( topic_Wake, "Error on starting the whistleblowing service" )){ sim_7000g.last_message = xTaskGetTickCount(); }
                     break;
             }
 
@@ -254,27 +254,27 @@ void someoneIsListenToUs(  char * topic, byte * payload, unsigned int length ) {
                 //  Resume the logger service
                 switch ( recordingStatus ){
                     case 0:
-                        mqtt.publish( topic_Wake, "Error on start recording" );
+                        if ( mqtt.publish( topic_Wake, "Error on start recording" ) ) { sim_7000g.last_message = xTaskGetTickCount(); }
                         Serial.println("SD mounting error");
                         break;
 
                     case 1:
-                        mqtt.publish( topic_Wake, "Yes master! Starting to record data" );
+                        if ( mqtt.publish( topic_Wake, "Yes master! Starting to record data" ) ) { sim_7000g.last_message = xTaskGetTickCount(); }
                         Serial.println("Starting to record data");
                         break;
 
                     case 2:
-                        mqtt.publish( topic_Wake, "Master, recording service is already running" );
+                        if ( mqtt.publish( topic_Wake, "Master, recording service is already running" ) ) { sim_7000g.last_message = xTaskGetTickCount(); }
                         Serial.println("Starting to record data");
                         break;
 
                     case 3:
-                        mqtt.publish( topic_Wake, "Error on creating file" );
+                        if ( mqtt.publish( topic_Wake, "Error on C" ) ) { sim_7000g.last_message = xTaskGetTickCount(); }
                         Serial.println("File creation error");
                         break;
                     
                     default:
-                        mqtt.publish( topic_Wake, "Error on start recording" );
+                        if ( mqtt.publish( topic_Wake, "Error on start recording" ) ) { sim_7000g.last_message = xTaskGetTickCount(); }
                         Serial.println("SD mounting error");
                         break;
                 }
@@ -287,7 +287,7 @@ void someoneIsListenToUs(  char * topic, byte * payload, unsigned int length ) {
 
             if ( SDlogger.recording ) {
 
-                mqtt.publish( topic_Wake, "Yes master! Suspending recording service" );
+                if (mqtt.publish( topic_Wake, "Yes master! Suspending recording service" )){ sim_7000g.last_message = xTaskGetTickCount(); }
                 Serial.println("Suspending recording service");
                 
                 //  Suspend the logger service

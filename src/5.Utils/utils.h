@@ -1,4 +1,10 @@
 #include <Arduino.h>
+#include "esp_system.h"
+#include "driver/gpio.h"
+
+#ifndef SPIFFS_H
+    #include <SPIFFS.h>
+#endif
 
 class UTILS {
     
@@ -57,6 +63,12 @@ class UTILS {
                 if ( TJAqueueHandler != NULL ) vQueueDelete( * TJAqueueHandler );
             #endif
 
+            SPIFFS.begin();
+            File anticrash = SPIFFS.open("/antiCrash.txt", "w");
+            anticrash.write('0');
+            anticrash.close();
+            SPIFFS.end();
+
             /* PENDING FOR IMPLEMENTATION*/
             /* Before ESP restar, close the open files and unmount the SD card */
             // if ( SDlogger.recording ) {
@@ -67,12 +79,15 @@ class UTILS {
             pinMode( GPIO_NUM_32 ,OUTPUT);
 
             
+            // vTaskDelay( 1000 / portTICK_PERIOD_MS );
+
+            // this->ESPClearFlash();
+
+            // esp_restart();
+            Serial.begin(115200);
+            Serial.println("Should be reseting next");
             vTaskDelay( 1000 / portTICK_PERIOD_MS );
-
-            this->ESPClearFlash();
-
-            esp_restart();
-            // digitalWrite( ESP_RST_PIN, LOW );
+            gpio_set_level(ESP_RST_PIN, 0);
 
         }
 

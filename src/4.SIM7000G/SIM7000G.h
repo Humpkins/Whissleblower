@@ -22,7 +22,6 @@
 #endif
 
 // TTGO T-Call pins
-#define MODEM_RST            GPIO_NUM_5
 #define MODEM_PWKEY          GPIO_NUM_4
 #define MODEM_POWER_ON       GPIO_NUM_25
 #define MODEM_TX             GPIO_NUM_27
@@ -98,12 +97,16 @@ class SIM7000G {
         // Instantiate the GPRS structure
         struct gprsInfo CurrentGPRSData;
 
+        int32_t last_message = 0;
+
         void setup(){
 
             pinMode( MODEM_PWKEY, OUTPUT );
             digitalWrite( MODEM_PWKEY, HIGH );
 
             SerialAT.begin(9600, SERIAL_8N1, MODEM_RX, MODEM_TX, false);
+
+            SerialAT.write("AT+CFUN=6\r\n");
 
             vTaskDelay( 1500 / portTICK_PERIOD_MS );
 

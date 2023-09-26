@@ -28,7 +28,7 @@ class otaClass {
             sprintf( ListenTopic, "%s/%s/%s", g_states.MQTTProject, g_states.MQTTclientID, g_states.MQTTListenTopic );
 
             Serial.println("Starting FOTA sequence...");
-            mqtt.publish( topicOTA, "Starting FOTA sqeuence..." );
+            if (mqtt.publish( topicOTA, "Starting FOTA sqeuence..." )){ sim_7000g.last_message = xTaskGetTickCount(); }
 
             auto OTAStatus = OTADRIVE.updateFirmware( OTAclient, false );
             
@@ -38,11 +38,11 @@ class otaClass {
             if ( compare > 0 ) {
                 char response[] = "Firmware update complete. Rebooting system. I'll be back in 1 minute";
                 Serial.println(response);
-                mqtt.publish(ListenTopic, response);
+                if ( mqtt.publish(ListenTopic, response)){ sim_7000g.last_message = xTaskGetTickCount(); }
                 utilities.ESPReset(  );
             } else {
                 Serial.println(OTAStatus.toString().c_str());
-                mqtt.publish(ListenTopic, OTAStatus.toString().c_str());
+                if ( mqtt.publish(ListenTopic, OTAStatus.toString().c_str())){ sim_7000g.last_message = xTaskGetTickCount(); }
             }
 
             vTaskResume( xHeartBeat );

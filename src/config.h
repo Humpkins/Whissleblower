@@ -2,7 +2,7 @@
 
 #define FS_NO_GLOBALS
 
-#include <SPIFFS.h>
+#include "esp_spiffs.h"
 #define SPIFFS_H
 
 #include <ArduinoJson.h>
@@ -16,10 +16,19 @@ StaticJsonDocument<512> configRoot;
 class states{
   private:
     int mountFailMax = 5;
-    File configFile;
+    FILE *configFile;
+    esp_err_t ret;
+
     char configFilePath[12] = "/config.txt";
 
   public:
+    esp_vfs_spiffs_conf_t conf = {
+      .base_path = "/",
+      .partition_label = NULL,
+      .max_files = 10,
+      .format_if_mount_failed = true
+    };
+
     char APN_GPRS [21] = "claro.com.br";
     char APN_CATM [21] = "cat-m1.claro.com.br";
 
@@ -29,7 +38,7 @@ class states{
     bool VoltageInput = false;
 
     char MQTTProject [31] = "Whistleblower";
-    char MQTTHost [40] = "broker.hivemq.com";//"0.tcp.sa.ngrok.io";
+    char MQTTHost [40] = "test.mosquitto.org";//"0.tcp.sa.ngrok.io";
     int16_t MQTTPort = 1883;//17489;
     char MQTTclientID [21] = "MotoTesteTCC";
     char MQTTUsername [15] = "";//"Whistleblower";
@@ -37,6 +46,7 @@ class states{
     char MQTTInfoTopic [5] = "Info";
     char MQTTDataTopic [14] = "potenciometro";
     char MQTTTopic [31] = "Teste_moto_cliente_tcc";
+    char mDNS[31] = "whistleblower";
 
     char MQTTWakeTopic [11] = "Wake";
 
@@ -64,7 +74,6 @@ class states{
     char STA_SSID [21] = "Unicon 2.4_Juliana";
     char STA_PSW [21] = "99061012";
 
-    char ALARM_CURRENT_NAME [25] = "overcurrent.txt";
     int MAX_CURRENT = 90;
 
     int N_BATERRIES = 0;
@@ -88,14 +97,27 @@ class states{
       }
 
       // Checks for SPIFFS open
+      this->ret = esp_vfs_spiffs_register(&this->conf);
+      if ( this->ret != ESP_OK  ) return false;
+
       int attempt = 0;
-      while ( !SPIFFS.begin() ) {
+      this->configFile = NULL;
+      while (this->configFile == NULL) {
         attempt++;
 
-        this->configFile = SPIFFS.open( this->configFilePath, FILE_WRITE);
+        this->configFile = fopen( this->configFilePath, "w");
 
-        if ( !this->configFile ) continue;
-        if ( attempt > this->mountFailMax ) return false;
+        if ( this->configFile == NULL ) continue;
+        if ( attempt > this->mountFailMax ) {
+          Serial.println("    [FAIL]");
+          Serial.println("Error on saving the confguration file: The file wasn't open");
+          esp_vfs_spiffs_unregister(conf.partition_label);
+          
+          if ( !wasSerialOpened ) Serial.end();
+
+          return false;
+        }
+
       }
 
       Serial.print("Saving configuration data to SPIFFS");
@@ -133,31 +155,21 @@ class states{
       //  Serialize JSON Object to array of string
       char configBuffer[measureJson(configRoot) + 1];
       serializeJson(configRoot, configBuffer, measureJson(configRoot) + 1);
-
-      if ( this->configFile ) {
         
-        if ( !this->configFile.print(configBuffer) ){
-          Serial.println("    [FAIL]");
-          Serial.println("Error on saving the configuration file: It wasn't possible to write the configuration on the file");
-          return false;
-        }
-
-        this->configFile.close();
-        SPIFFS.end();
-
-        Serial.println("    [OK]");
-        if ( !wasSerialOpened ) Serial.end();
-
-        return true;
-      } else {
+      if ( fprintf(this->configFile, configBuffer ) < 0 ){
         Serial.println("    [FAIL]");
-        Serial.println("Error on saving the confguration file: The file wasn't open");
-        SPIFFS.end();
-        
-        if ( !wasSerialOpened ) Serial.end();
-
+        Serial.println("Error on saving the configuration file: It wasn't possible to write the configuration on the file");
         return false;
       }
+
+      fclose( this->configFile );
+      esp_vfs_spiffs_unregister(conf.partition_label);
+
+      Serial.println("    [OK]");
+      if ( !wasSerialOpened ) Serial.end();
+
+      return true;
+
     }
   #endif
 
@@ -185,26 +197,40 @@ class states{
       char configBuffer[measureJson(configRoot) + 1];
       serializeJson(configRoot, configBuffer, measureJson(configRoot) + 1);
 
-      SPIFFS.begin();
-      this->configFile = SPIFFS.open(this->configFilePath, FILE_WRITE);
+      // Checks for SPIFFS open
+      this->ret = esp_vfs_spiffs_register(&this->conf);
+      if ( this->ret != ESP_OK  ) return;
 
-      if ( this->configFile ) {
-        
-        if ( !this->configFile.print(configBuffer) ){
+      int attempt = 0;
+      this->configFile = NULL;
+      while (this->configFile == NULL) {
+        attempt++;
+
+        this->configFile = fopen( this->configFilePath, "w");
+
+        if ( this->configFile == NULL ) continue;
+        if ( attempt > this->mountFailMax ) {
           Serial.println("    [FAIL]");
-          Serial.println("Error on saving the configuration file: It wasn't possible to write the configuration on the file");
+          Serial.println("Error on saving the confguration file: The file wasn't open");
+          esp_vfs_spiffs_unregister(conf.partition_label);
+
           return;
         }
 
-        this->configFile.close();
-        SPIFFS.end();
-
-        Serial.println("    [OK]");
-      } else {
-        Serial.println("    [FAIL]");
-        Serial.println("Error on saving the confguration file: The file wasn't open");
-        SPIFFS.end();
       }
+
+      if ( fprintf(this->configFile, "w") < 0 ) {
+        Serial.println("    [FAIL]");
+        Serial.println(
+          "Error on saving the configuration file: It wasn't possible to write the configuration on the file"
+        );
+        return;
+      };
+
+      fclose( this->configFile );
+      esp_vfs_spiffs_unregister(conf.partition_label);
+
+      Serial.println("    [OK]");
 
     }
 
@@ -216,31 +242,40 @@ class states{
         Serial.begin(115200);
       }
 
-      Serial.print("Retrieving configuration data from SPIFFS");
-      SPIFFS.begin();
+      Serial.print("Retrieving configuration data from SPIFFS\n");
 
       // Checks for SPIFFS open
-      this->configFile = SPIFFS.open(this->configFilePath, FILE_READ);
-      if ( !this->configFile ) {
-        Serial.println("    [FAIL]");
-        Serial.print("There was no configFile on the flash memory.\nCreating one with default settings and continuing the program");
-        SPIFFS.end();
-        
-        this->writeDefaultConfigurations();
+      this->ret = esp_vfs_spiffs_register(&this->conf);
+      if ( this->ret != ESP_OK  ) return false;
+
+      int attempt = 0;
+      this->configFile = NULL;
+      while (this->configFile == NULL) {
+        attempt++;
+
+        this->configFile = fopen( this->configFilePath, "r");
+
+        if ( this->configFile == NULL ) continue;
+        if ( attempt > this->mountFailMax ) {
+          Serial.println("    [FAIL]");
+          Serial.print("There was no configFile on the flash memory.\nCreating one with default settings and continuing the program");
+          esp_vfs_spiffs_unregister(conf.partition_label);
+
+          this->writeDefaultConfigurations();
+        }
+
       }
 
       Serial.println("    [OK]");
 
       //  Read the file into local variable
-      int fileSize = 500;
+      unsigned int fileSize = 500;
       char configJSONbuffer[ fileSize + 1];
       int loop_read = 0;
 
-      while ( this->configFile.available() && loop_read < fileSize ) {
-        configJSONbuffer[loop_read] = this->configFile.read();
-        loop_read++;
-      }
-      configJSONbuffer[fileSize] = '\0';
+      fgets( configJSONbuffer, fileSize, this->configFile );
+      char* pos = strchr( configJSONbuffer, '\n' );
+      if ( pos ) *pos = '\0';
 
       Serial.print("Loading config file");
       configRoot.clear();
@@ -265,9 +300,10 @@ class states{
       strcpy( this->STA_PSW, configRoot["STA_PSW"]);
       strcpy( this->AP_SSID, configRoot["AP_SSID"]);
       strcpy( this->AP_PSW, configRoot["AP_PSW"]);
+      strcpy( this->mDNS, configRoot["mDNS"]);
 
-      this->configFile.close();
-      SPIFFS.end();
+      fclose(this->configFile);
+      esp_vfs_spiffs_unregister(conf.partition_label);
 
       Serial.println("    [OK]");
       if ( !wasSerialOpened ) Serial.end();

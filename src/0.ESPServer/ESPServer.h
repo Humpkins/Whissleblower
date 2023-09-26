@@ -1,11 +1,17 @@
 #include <ESPAsyncWebServer.h>
 #include <ESPmDNS.h>
 #include <WiFi.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include "esp_spiffs.h"
+#include "esp_system.h"
 
-// #define IS_WIFI_AP
-// #ifndef IS_WIFI_AP
-//     WiFiClient wifiClient;
-// #endif
+#include "esp_wifi.h"
+#include "esp_event.h"
+#include "esp_log.h"
+
+#include <SPIFFS.h>
+#include <SD.h>
 
 AsyncWebServer server(80);
 
@@ -17,55 +23,108 @@ class ESP_Server {
         TickType_t lastRequest = xTaskGetTickCount();
         int16_t isWebServerOn = 0;
         int16_t is_wifi_AP_value = 0;
+        esp_err_t ret;
 
         void setup( int16_t is_wifi_AP ){
             if ( !this->isWebServerOn ) {
                 this->isWebServerOn = 1;
 
+                // Initialize WiFi
+                wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+                esp_wifi_init(&cfg);
+
                 #ifdef SPIFFS_H
-                SPIFFS.begin(true);
+                this->ret = esp_vfs_spiffs_register(&g_states.conf);
                 #endif
 
                 Serial.println("Setting up the ESP Server");
 
                 this->is_wifi_AP_value = is_wifi_AP;
                 if ( is_wifi_AP ) {
-                    WiFiClient wifiClient;
 
                     Serial.println("Connecting on Access Point mode");
                     Serial.printf("SSID: %s PWD: %s \n", g_states.AP_SSID, g_states.AP_PSW);
-                    // WiFi.mode(WIFI_AP);
-                    WiFi.softAP( g_states.AP_SSID, g_states.AP_PSW );
-                    TickType_t start = xTaskGetTickCount();
-                    while( WiFi.status() != WL_CONNECTED ){
-                        Serial.print(".");
-                        if ( (xTaskGetTickCount() - start) > (60000 / portTICK_PERIOD_MS) ) {
-                            Serial.println("\n        [FAIL]");
+                    // Configure WiFi as an Access Point
+                    wifi_config_t ap_config = {
+                        .ap = {
+                            .ssid = {0},
+                            .password = {0},
+                            .max_connection = 4, // Maximum number of clients
+                            .authmode = WIFI_AUTH_WPA_WPA2_PSK
+                        },
+                    };
+
+                    // Copy the SSID and password strings to the configuration
+                    strncpy((char*)ap_config.sta.ssid, g_states.AP_SSID, sizeof(ap_config.sta.ssid) - 1);
+                    strncpy((char*)ap_config.sta.password, g_states.AP_PSW, sizeof(ap_config.sta.password) - 1);
+
+                    esp_wifi_set_mode(WIFI_MODE_AP);
+                    esp_wifi_set_config(WIFI_IF_AP, &ap_config);
+
+                    // Wait for WiFi to connect
+                    uint32_t connect_timeout_ms = 10000; // Adjust as needed
+                    TickType_t start_ticks = xTaskGetTickCount();
+                    wifi_ap_record_t wifi_info;
+
+                    while (1) {
+                        if (esp_wifi_sta_get_ap_info(&wifi_info) == ESP_OK) {
+                            break; // Exit the loop once we've printed the IP address
+                        }
+
+                        // Check for a timeout
+                        if ((xTaskGetTickCount() - start_ticks) * portTICK_PERIOD_MS >= connect_timeout_ms) {
+                            Serial.println("        [FAIL]");
                             this->turnESPServerOff();
                             return;
                         }
-                        vTaskDelay( 1000/portTICK_PERIOD_MS );
+
+                        vTaskDelay(1000 / portTICK_PERIOD_MS); // Delay to avoid busy-waiting
                     }
-                    Serial.println("\n       [OK]");
+
+                    Serial.println("       [OK]");
 
                     Serial.print("Connected AP ");
 
                 } else {
                     Serial.println("Connecting on Station mode");
                     Serial.printf("SSID: %s PWD: %s \n", g_states.STA_SSID, g_states.STA_PSW);
-                    WiFi.mode(WIFI_STA);
-                    WiFi.begin( g_states.STA_SSID, g_states.STA_PSW );
-                    TickType_t start = xTaskGetTickCount();
-                    while( WiFi.status() != WL_CONNECTED ){
-                        Serial.print(".");
-                        if ( (xTaskGetTickCount() - start) > (60000 / portTICK_PERIOD_MS) ) {
+
+                    // Configure WiFi as a Station
+                    wifi_config_t sta_config = {
+                        .sta = {
+                            .ssid = {0},
+                            .password = {0},
+                        },
+                    };
+
+                    // Copy the SSID and password strings to the configuration
+                    strncpy((char*)sta_config.sta.ssid, g_states.STA_SSID, sizeof(sta_config.sta.ssid) - 1);
+                    strncpy((char*)sta_config.sta.password, g_states.STA_PSW, sizeof(sta_config.sta.password) - 1);
+
+                    esp_wifi_set_mode(WIFI_MODE_STA);
+                    esp_wifi_set_config(WIFI_IF_STA, &sta_config);
+                    esp_wifi_start();
+
+                    // Wait for WiFi to connect
+                    uint32_t connect_timeout_ms = 10000; // Adjust as needed
+                    TickType_t start_ticks = xTaskGetTickCount();
+                    wifi_ap_record_t wifi_info;
+
+                    while (1) {
+                        // Exit the loop once we've printed the IP address
+                        if (esp_wifi_sta_get_ap_info(&wifi_info) == ESP_OK) {
+                            break; 
+                        }
+
+                        // Check for a timeout
+                        if ((xTaskGetTickCount() - start_ticks) * portTICK_PERIOD_MS >= connect_timeout_ms) {
                             Serial.println("        [FAIL]");
                             this->turnESPServerOff();
                             return;
                         }
-                        vTaskDelay( 1000/portTICK_PERIOD_MS );
+
+                        vTaskDelay(1000 / portTICK_PERIOD_MS); // Delay to avoid busy-waiting
                     }
-                    Serial.println("\n       [OK]");
 
                     Serial.print("Connected STA with the following IP: ");
                     Serial.println(WiFi.localIP().toString().c_str());
@@ -147,25 +206,19 @@ class ESP_Server {
                                 return;
                             }
 
-                            File root = SD.open("/");
-                            if(!root){
-                                Serial.println("Failed to open directory");
-                                request->send(500);
-                                return;
-                            }
-                            if(!root.isDirectory()){
-                                Serial.println("Not a directory");
-                                request->send(500);
-                                return;
-                            }
+                            DIR *root = opendir("/");
+                            struct dirent *entry;
+                            struct stat *sb;
+                            int statok;
                                 
                             this->ReturnedFilesCount = 0;
-                            File file = root.openNextFile();
-                            while (file) {
+                            while ((entry = readdir(root)) != NULL) {
 
-                                if( !file.isDirectory() ){
-                                    char *name = (char *)file.name();
-                                    size_t size = file.size();
+                                if( entry->d_type == DT_REG ){
+                                    statok = stat( entry->d_name, sb );
+
+                                    char *name = entry->d_name;
+                                    int size = (int)sb->st_size;
 
                                     if ( size > 0  && strstr( name, ".txt" ) != NULL ) {
 
@@ -180,12 +233,10 @@ class ESP_Server {
                                     }
                                 }
 
-                                file = root.openNextFile();
-
                                 if ( this->ReturnedFilesCount > this->maxReturnedFiles ) break;
                             };
 
-                            root.close();
+                            closedir( root );
 
                             xSemaphoreGive( xSD );
 
@@ -221,17 +272,18 @@ class ESP_Server {
                                     request->send(500);
                                 }
 
-                                if ( !SD.exists(FullFilePath) ) request->send(404);
+                                File downloadFile = SD.open( FullFilePath );
+                                if( !downloadFile ) request->send(404);
                                 else {
                                     Serial.printf("Serving file: %s\n", FullFilePath);
-                                    File file = SD.open(FullFilePath);
-                                    if ( file ) {
-                                        AsyncWebServerResponse *response = request->beginResponse( file, FullFilePath, String(), true );
-                                        
-                                        request->send(response);
-                                    } else request->send(404);
-
-
+                                    AsyncWebServerResponse *response = request->beginResponse(
+                                        downloadFile,
+                                        FullFilePath,
+                                        String(),
+                                        true
+                                    );
+                                    
+                                    request->send(response);
                                 };
 
                                 xSemaphoreGive( xSD );

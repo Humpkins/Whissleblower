@@ -36,6 +36,7 @@ class CANErrorMQTT {
             char MCUtopic[sizeof(g_states.MQTTProject)+ sizeof(g_states.MQTTclientID)+ sizeof(g_states.MQTTCANErrFrequencyTopic) + 3];
             sprintf(MCUtopic, "%s/%s/%s", g_states.MQTTProject, g_states.MQTTclientID, "MCU_ERR");
             int MCU_status = mqtt.publish(MCUtopic, MCU_CAN_ERR);
+            if ( MCU_status ){ sim_7000g.last_message = xTaskGetTickCount(); }
 
             CANErr_freq_root.clear();
 
@@ -87,6 +88,7 @@ class CANErrorMQTT {
             char BM1topic[sizeof(g_states.MQTTProject)+ sizeof(g_states.MQTTclientID)+ sizeof(g_states.MQTTCANErrFrequencyTopic) + 3];
             sprintf(BM1topic, "%s/%s/%s", g_states.MQTTProject, g_states.MQTTclientID, "BMS1_ERR");
             int BMS1_status = mqtt.publish(BM1topic, BMS1_CAN_ERR);
+            if ( BMS1_status ) { sim_7000g.last_message = xTaskGetTickCount(); }
 
             CANErr_freq_root.clear();
 
@@ -138,6 +140,7 @@ class CANErrorMQTT {
             char BM2topic[sizeof(g_states.MQTTProject)+ sizeof(g_states.MQTTclientID)+ sizeof(g_states.MQTTCANErrFrequencyTopic) + 3];
             sprintf(BM2topic, "%s/%s/%s", g_states.MQTTProject, g_states.MQTTclientID, "BMS2_ERR");
             int BMS2_status = mqtt.publish(BM2topic, BMS2_CAN_ERR);
+            if (BMS2_status){ sim_7000g.last_message = xTaskGetTickCount(); }
 
             if ( MCU_status && BMS1_status && BMS2_status ) return false;
             else return true; 

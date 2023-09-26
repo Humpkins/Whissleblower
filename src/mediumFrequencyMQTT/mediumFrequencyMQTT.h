@@ -46,7 +46,10 @@ class mediumFrequencyMQTT {
             int status = mqtt.publish(topic, MediumFrequencyDataBuffer);
 
             if ( !status ) return false;
-            else return true;
+            else {
+                sim_7000g.last_message = xTaskGetTickCount();
+                return true;
+            }
         }
 
         // Send Medium frequency data to the MQTT Broker
@@ -99,7 +102,10 @@ class mediumFrequencyMQTT {
             int status = mqtt.publish(topic, MediumFrequencyDataBuffer, false);
 
             if ( !status ) return false;
-            else return true;
+            else {
+                sim_7000g.last_message = xTaskGetTickCount();
+                return true;
+            }
         }
 };
 

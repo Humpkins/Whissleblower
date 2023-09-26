@@ -6,3 +6,259 @@ Qual a melhor forma de utilizar um sensor que disponibiliza um pinout de interru
 Eu sei que utilizar a interrupção é a forma mais eficiente de fazer a leitura, mas tenho medo de que se usar errado, esse sensor poderá
 atrapalhar o fluxo da aplicação. VERIFICAR SE NÃO ESTOU COLOCANDO MUITA COISA NA FUNÇÃO DE INTERRUPÇÃO
             Re: Se utilizar uma interrupção para acordar uma task, essa operação fica bem eficiente por causa do RTOS
+
+
+
+#Roteiro
+
+###     Me apresentar
+
+Hello there!
+Recently I've been working on my college capstone projet and suddenly I realise how proud I was onver my creation
+And then I thought, "Well, I should probably document it so I can remember it when my kids go to college"
+You know what I also should be doing? Presenting myself
+
+I'm Mateus Lourenço, a 26 year old, Brazilian, almost an official engineer by this point and higly enthusiast of working with technology
+I currently studying mechanical engineering on the Federal University of Pernambuco for the past 5 years and Recently I faced the most
+antecipated challange for almost avery engineering studant here, the Capstone Project
+
+For this project, I decided that I should be putting to practice the best knoledges I had obtained over my past experiences
+So I can create a sort of 
+For you that probably don't know, I've worked on a extension program called Mangue Baja. In witch a bunch of crazy, studants
+get together in one porpouse, sell their soul into the project. Well, I'm obviously joking, they acctually a bunch of
+skilled individuals that do the impossible to design and manufacture a off-road vehicle from sckrach. I've proudly was one of those
+individuals and spent 2 years deeveloping my mechanical and management skills along with it.
+
+I've also worked on a Brazilian electric vehicle start-up that aimed to bring EV motorcycles into the Brazilian market. This experience also
+gave me a whole other vision over electronics engineering since I've been in direct contact on electrical/electronics development for equipments
+as motors, inverters, vehicle wire-harness and also, IoT solutions.
+
+That's when I decided to put my effort on the development of an IoT solution of my own. But in my version, I was looking into
+develop a product that target other engineers that need to test numerous baches of vehicle and gatter all the data into someware
+that can be summarized and analysed.
+
+###     Contextualizar o projeto
+
+Well, there is no news that vehicles is continuously turning into a cellphone. I mean, look at wat tesla has become, Of course it is a car,
+but you can also, play games, watch youtube videos, record a video, access weird easter eggs, chaging needs and the most important of all:
+collect data from it's user. This is a controversial topic, I don't want to get into details in this video, but you can see that, by gettering
+the drive details, Tesla, using it Safety Score feature, It can automatically classify all the Tesla users into dangerous and non-dangerous drivers.
+And We can easily extend this feature for maintenance matters, such as predictive maintenance, component feedback for the engineering team
+spare parts management, since you'll know in what places you'll need a spaceific number of sparepart of a specific component. So my objective
+was crystal clear at this point.
+
+###     Explicar quais eram meus objetivos no inicio do projeto
+
+Ok, so I needed to create an IoT device that collects key data from vehicles and sends them to a server that overviews all the connected devices.
+So I started by classifying these key informations and the fucntionalities that the device should have to succesefully collects it and Send
+it to an external server.
+
+Here are the metrics that I judged important to retrieve and why:
+Speed, torque and instantaneous battery current. So I can classify the stress level in witch the vehicle is operating
+Vehicle limits such as, motor, inverter and batteries temperature. So I can set a clearance between the operating condition and the crictical limits
+Some vehicle states as, batteries SoC, SoH and mechanica and electrical efficiencies,
+    so I can study the effect of each state parameter into the total range over the vehicle lifetime
+It is also collected, GNSS and GSN base station data, so the geographic variable can also be object of study
+the GSM signal data, so we can check the data reliability
+And finally, the error log list, That will be the allert for any issue on any component on the motorcycles
+
+By the end of this project I've also added inertial measurement because it is cool. I mean look at it, you can check if the motorcycle
+is either an Moto GP vehicle or a pizza delivery guy motorcycle. Jokes asside, It will be important to get longitudinal and lateral dynamics
+from the tests motorcycles data.
+
+###     Funcionalidades
+So, since we know what we should be looking at, now we need to know how we can look at it. And for that, here we'll discuss what fucntionalities
+the device must have in order to do so.
+
+The first and most obvious one, is the Telematics ability. For that we'll develop a service that, once in action, is abble to read the sensors
+and comunication bus data, getter into a data frame and send it to an externa server. For this service, I'll give the name "Whistleblower", you
+know, because it is telling us information from the inside
+
+the next one, is called Dataloggin. C'mon, whistleblower is a great name, I've speent all my creativity on that one. This service, when invoked
+should get these dataframes and stores into an SD card
+
+And the last one is called ESP File server. When invoket, it should create a webserver that provides an HTML for user interface and an API so
+all the configuration and settup data can be accessible.
+
+But before we get into this project software and hardware shenanigans, we must talk breaflly about the comunication protocols used.
+I'll be quick about it, don't worrie
+
+The first COM protocol is the UART, that stands for Universal Asynchronous receiver/transmitter. As the name implies, it is an assync comunication
+witch means that there is no clock line keeping both devices sychronized. This protocol only needs 2 data busses allowing it to transmit and receiver
+data at the same time.
+
+There is also the SPI protocol, witch stands for Serial Peripheral Interface. It also have 2 data busses, but now these comunication is syncronous
+using a specific clock line between all the devices. It also allows use the same IO bus pairs in order to comunicate between more than one device
+using its chip select interface to select witch device is now comunicating with its master.
+
+We'll also use a I²C bus, witch stands for inter-integrated circuit. This standard uses only one databus for data transaction, this comunication is
+also syncronous, since it has the clock bus. This protocol can comunicate with multiple devices just like the SPI protocol, but instead of a Chip
+select bus, the I²C uses indentification bytes on its messagens so the each device knows when to step up and comunicate over the bus.
+
+Anothe comunication protocol that uses Identification bytes on its messages to addres a comunication over multiple receivers, is the CAN bus protocol.
+CAN standds for Controller Area Network. Contrary to previous 3 standards, the CAN bus is intended to use over relativelly long distances, enabeling
+multiple isolated modules to comunicate with one another. This, along with it's robustness agains noise interference and error handdler, makes this
+type of comunication the most common in the automotive scenario.
+
+Another intresting tool we'll be using during the development is the GSM comunication. Global System for Mobile communication Is the network used
+by our phones. So we'll basically use it to send our data over the internet even when the bike is not reachable by any wifi network.
+We'll also use a Global navigation satelite system to retrieve positioning data.
+
+###     Hardware
+
+Well, with this out of the way, we shall now speak about the Hardware necessary to accoumplish these tasks.
+
+The first thing that poped up in my head was about the hardware. I didn't wanted to use a development board that hass all theses
+pins and modules that I'll barely use on my project. instead, I could develop a custom board that uses the exact amount of pins as my
+project required. But develop a custom board is a hole other project that would require multiple interactions and also, JLPCB is a great
+service, but the lead time and the shipment fees is impeditive for Brazilian makers.
+Sooo, I chose to use a dev board, even though it would be a canon ball to kill mosquitto. And then, on my reaserches, i found this board.
+It's perfect, it has almost the same amount of IOs I need, It encapsulates the WiFi module, a SD card socket and a SIM7000G module.
+
+This SIM7000G is a SIMCOM modem that is capable of connect to a GSM, LTE or NB-IoT network. It is also capable for connecting to GPS or GLONAS
+satelites for positioning data accisition. And if that still didn't convinced you that this board is perfec, It also features a Lithium Ion cell
+socket and IC to safelly manage it during charge and discharge. By the way, this lithium ion cell is charged up using a onboard JST socket that
+uses up to 6V in order to cahrge it. This is for those who want to charge the battery using solar pannel.
+
+It still have some issues tough, like, it uses an UART interface to the ESP core module. It can be bad because u can only use one bus
+for both GNSS and GSM data. This offten causes the GSM to hang waiting for GNSS data converge so it can free the bus for the GSM comunication
+with the ESP module. But for this project, its good enough
+
+###     Walkthrough da seleção dos componentes
+
+The next step was to select the remainder components that would be required to the state readings.
+The first of all, is the power source. Since I needed this device to be suitable for various vehicles, I needed a power supply
+that is efficient and suitable to up 70V, I choosed the XL7015. Altough it has a low power output it is still suitable for our application
+and has an icredible voltage range to up to 80V. So it can be powered from either 12V DC-DC converters up to the vehicle battery itself,
+if the system works below 80V in some cases.
+
+For the CAN bus comunication, I chosse to use the onboard SJ1000 CAN controller and for this, I needed to buy a can transceiver that converts
+the CAN-H, CAN-L signal into the UART inteface to the ESP controller. Gladlly transceivers such as the TJA1050 is highly available here in Brazil
+and it is also cheep. So that's a clear choice
+
+Finally, It was needed to chose the Inertial measurement unit. That's also a clear choice, because the GY-521 is also a cheep solution that
+brings all the power from the MPU6050 into a compact module. And to interface this device, we should use the I²C protocol metioned before.
+
+In order to bring it all togetter I used an 4x6 cm fiberglass prototype board. I used it to create a shield board that easily connects to the
+LilyGo's female pin headers therefore connecting all the components to the ESP32. I used this technique initially because since the project
+still was in a initial discovery phase, a lot could change and using this method it was easy to provide the necessary modifications.
+
+And talking about modifications, I ended up doing some by the end of the hardware design. I needed to add a connection via between an GPIO
+and a reset pin, since I implemented a routine that forces a hardware reset on the ESP32 in case of infinite software reset loop.
+I'll explain that latter on the video.
+I've also needed to connect the XL7015 5V output to the LilyGo's solar input charger, since this interface features a DW06 IC,
+wich basically protects the battery against damagin events. And by damaging events I mean, orvervoltage, undervoltage, over current,
+over temperature and reverse connection.
+
+###     Software
+For the framework selection, I had 2 options basically the Arduino's SDK and the ESP-IDF. The choosed one, was the Arduino Framework.
+I had a lot to do in a short period of time, and this framework is glorious on abstract boring operations. It also have
+a really strong comunity that provides lots of handy libraries and useful helps on online forums. But It also have expressives downsides,
+I can mention the huge binary size, since you offten don't use all the libraries feature that your uploading into your application.
+The second downside, is that it is not the Native core programming so it can be limited sometimes, speccially when you talk about
+debugging and rtos task operations.
+
+And since I mentioned it, the real time operating system used in this program was the FreeRTOS, since it is already available on the
+ESP32 core. For those who don't know what is it, it is basically a task manager that receive all the functions you want to run concurrently
+and do some cool stuf such as prioritization and syncronization.
+
+Before I was able to start the main code, I needed to test the main sensors integration and comunication.
+
+Testes para conseguir conectar o GSM via AT commands
+First, I tested the GSM comunication, basically poking and discovering how to use the TinyGSM lib until I could see my messages
+been received on a remote MQTT broker. For that, I used the PubSubClient and a TinyGSM client.
+
+Testes para conseguir subir um srvidor via STA e AP WiFi
+I also needed to understand how to get a STA and AP wifi server up. It is not hard, once you know the API function calls,
+some HTML, JavaScript and some basic understanding on http requests.
+
+Finnaly, I needed to understand how to use the SJA1000 CAN controller to filter and retrieve CAN data and the MPU6050 over it's I²C bus
+for gattering some inertial measure.
+
+###     Mão na massa
+Sooo, once we have all the basic concepts figured out, it was time to integrate them all in a simple application.
+
+###     Classe de estados
+I started creating a class to store the all the application states and configurations.
+
+It is a class that contains 2 types of atributes: the user defined and the system defined. The user defined is all the
+attributes that can be modifiable by the user, either over the MQTT or HTTP requests. The system defined attributes basically
+refers to all state data that was configured by the system and that is not user-modifiable.
+
+The user defined are states like MQTT configurations like host, client information and topics. I can also be the wifi server
+configuration as the mode (either station or access-point) HOST, SSID and password. The GSM information is also user defined, as the APN
+settings.
+The system defined attributes are informations regarding the directory for logged data, memory storage, firmware version,
+system health information, and some bike physical constants that should be hard coded into the application.
+
+Some of these states are stored into the ESP32 flash memory in order to assure data persistance. The save and load process is done
+over some of this class methods.
+
+### 
+
+        MPU6050
+            Coletando os dados
+            The first component that was integrated was the accelerometer MPU6050. The comunication with this device is made over the I²C protocol
+            witch I explained before. For that, is is only required to know the Acc and Gyro registers for the 3 axis. It is require to use the propper
+            LSB value for the full scale selected.
+
+            Fazendo as conversões necessárias
+            It is also required to put the accquired value into the right reference frame. And the ref we chose is the Earth reference. In that sense
+            we can get the lateral and longitudinal accelerations that are parallel to the ground. It involves a really complicated math to get them
+            so we use a library that magiaclly calculates them for us. Its the MPU6050_6Axis_MotionApps20, the link is in the description.
+
+            Guardando os dados na classe de estados
+            After getting the inertial data, they are stored on the into the state class so we can use them latter.
+
+        TJA1050
+            Recebendo dados gerados por um MCP2515
+            The next device we needed to integrate was the CAN comunication devices, witch are the TJA1050 transceiver and the SJA1000 controller. For that
+            task, we rellyied on the ESP-IDF API for the controller interface. It is a realy simple interface that only needed the specific CAN baud rate, the
+            serial output for of the TJA1050 and the filter configuration. This filter was needed so we could only process the desired CAN IDs on the main
+            CPU. We used the CAN_TEST software to get the Acceptance mask and acceptance code from the deisred IDs.
+            Criando a lógica de leitura dos dados
+            Guardando os dados na classo de estados
+
+        SIM7000G
+            Realizando a leitura dos meta-dados (Sginal qlty, signal type, stations detail)
+            Realizando a leitura dos dados de GPS_Speed
+            Salvando os dados na classe de estados
+
+        Envio de dados
+            Lógica de envio de dados (média e alta frequencia)
+            Estrutura de tópicos (Projeto, DeviceID, topic)
+
+        ESPServer
+            Quais dados da classe de estados são utilizados
+            Interface com a memória flash
+            Desenvolvimento dos métodos necessários
+                Carregamento do html
+                API para enviar a lista de configurações salvas
+                API para salvar as configurações modificadas
+                API para envio da lista de logs
+                API para apagar o log
+                API para baixar o log
+                API hartbeat do servidor para a interface web
+
+                Shut down esp server
+                Checks for client timout
+
+        Criação dos serviços
+            Whistleblowing
+                Lógica de inicio do serviço
+                Critérios de parada
+                    Logout
+                    Timeout
+            DattaLoging
+                Lógica de início do serviço
+                Critérios de parada
+                    Logout
+                    Probabbly good to get something like n° of rows saved as auto stop
+            ESP File Server
+                Lógica de início do serviço
+                Critérios de parada
+                    Timeout
+                    Whistleblowing service starting
+
+
+Test

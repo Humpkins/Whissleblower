@@ -1,49 +1,38 @@
 class overcurrent {
 
     public:
-        File watcherFile;
+        FILE *watcherFile;
         int16_t isSetedUp = 0;
+        char stateFile[18] = "/overcurrent.txt";
 
         void setup(){
-            if ( SD.cardType() == CARD_NONE ) {
-                Serial.println("Mounting SD");
-                if ( SD.begin() ) Serial.println("Compleated SD mounting");
-            } else {
-                if ( !SD.exists(g_states.ALARM_CURRENT_NAME) ) {
-                    this->watcherFile = SD.open(g_states.ALARM_CURRENT_NAME, FILE_WRITE);
-                    this->watcherFile.println("current,lat,lon,timestamp,BatteryID");
-                    this->watcherFile.close();
-                }
-                //  Flags the initial setup complete
-                this-> isSetedUp = 1;
-            }
+            
+            //  If the card is not mounted
+            if ( sd_card.mountSD() ) Serial.println("[OK]     SD mount compleated");
+            else Serial.println("[ERROR]       Error on mounting SD card. Check if SD card is properlly placed and try again");
         }
 
         void current() {
-            //  If SD is not mounted, ignore this step
-            if ( SD.cardType() == CARD_NONE ) SD.begin();
 
             // Check for overcurrent for each battery. If encounters overcurrented battery, logs it to a file
             for ( int i = 0; i < sizeof(TJA_DATA.batteries)/sizeof(TJA_DATA.batteries[0]); i++ ) {
                 if ( TJA_DATA.batteries[i].current > g_states.MAX_CURRENT ) {
 
+                    //  Close non-related overcurrent files
+                    this->watcherFile = fopen(this->stateFile, FILE_WRITE);
 
-                    if ( SDlogger.logFile ) SDlogger.logFile.close();
-                    if ( !this->watcherFile ) this->watcherFile = SD.open(g_states.ALARM_CURRENT_NAME, FILE_WRITE);
+                    char * buffer;
+                    sprintf(
+                        buffer,
+                        "%d, %.8f, %.8f, %s, %d\n",
+                        TJA_DATA.batteries[i].current,
+                        sim_7000g.CurrentGPSData.latitude,
+                        sim_7000g.CurrentGPSData.longitude,
+                        sim_7000g.CurrentGPSData.datetime,
+                        i
+                    );
 
-                    this->watcherFile.print( TJA_DATA.batteries[i].current );
-                    this->watcherFile.print(",");
-                    this->watcherFile.print( sim_7000g.CurrentGPSData.latitude );
-                    this->watcherFile.print(",");
-                    this->watcherFile.print( sim_7000g.CurrentGPSData.longitude );
-                    this->watcherFile.print(",");
-                    this->watcherFile.print( sim_7000g.CurrentGPSData.datetime );
-                    this->watcherFile.print(",");
-                    this->watcherFile.print(i);
-
-                    this->watcherFile.println();
-
-                    this->watcherFile.close();
+                    fclose(this->watcherFile);
                 }
             }
             return;

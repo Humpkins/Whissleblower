@@ -20,7 +20,7 @@ class AntiCrashClass {
         void updateCrashCheckFile() {
             SPIFFS.begin();
             this->crashCheck = SPIFFS.open(this->crashFile, FILE_WRITE);
-            this->crashCheck.write('0');
+            this->crashCheck.write('1');
             this->crashCheck.close();
             SPIFFS.end();
         }
@@ -55,18 +55,18 @@ class AntiCrashClass {
 
             if (strcmp(isAllowed, "1") == 0) {
                 Serial.println("        [OK]");
-
-                //  If it was no longer needing for hardware reboot, set it to pending and continue the program
-                // In that way, the next time the hardware boot, it will hardware reboot once to clean the memory
-                this->updateCrashCheckFile();
-                return;
-            }
-            else {
-                Serial.println("        [OK]");
                 Serial.println("Hardware still need to reboot though");
 
                 this->crashCheck.close();
                 this->createCrashCheckFile();
+                return;
+            }
+            else {
+                Serial.println("        [OK]");
+
+                //  If it was no longer needing for hardware reboot, set it to pending and continue the program
+                // In that way, the next time the hardware boot, it will hardware reboot once to clean the memory
+                this->updateCrashCheckFile();
             }
         }
 

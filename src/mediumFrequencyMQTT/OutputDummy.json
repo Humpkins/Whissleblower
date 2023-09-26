@@ -1,17 +1,19 @@
 {
-    "Latitude": -8.186256409,
-    "Longitude": -34.92202759,
+    "Latitude": -8.18605423,
+    "Longitude": -34.92196655,
     "GPS_Speed": 0,
-    "Altitude": 4.699999809,
-    "Orientation": 0,
-    "SatelitesInViewGNSS": 21,
-    "SatelitesInUseGPS": 6,
+    "Altitude": 16,
+    "Orientation": 112,
+    "SatelitesInViewGNSS": 20,
+    "SatelitesInUseGPS": 10,
     "SatelitesInUseGLONASS": 2,
-    "GPRS_SingalQuality": 21,
+    "GPRS_SingalQuality": 24,
     "GPRS_Operational_Mode": "GSM",
-    "cellID": 20075,
+    "cellID": 1833,
     "MCC": 724,
     "MNC": 5,
-    "LAC": "0x1695",
-    "Firmware_Ver": "1.0.1"
-}
+    "LAC": 5781,
+    "Firmware_Ver": "v@1.0.0.3",
+    "ICCID": "89550532810041862670",
+    "bat_voltage": 99
+  }
