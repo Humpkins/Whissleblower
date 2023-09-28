@@ -1,6 +1,6 @@
 #include <ESPAsyncWebServer.h>
 #include <ESPmDNS.h>
-#include <WiFi.h>
+// #include <WiFi.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include "esp_spiffs.h"
@@ -25,13 +25,41 @@ class ESP_Server {
         int16_t is_wifi_AP_value = 0;
         esp_err_t ret;
 
+        static void wifi_event_handler(void* arg, esp_event_base_t event_base,
+                                            int32_t event_id, void* event_data)
+        {
+            if (event_id == WIFI_EVENT_AP_STACONNECTED) {
+                wifi_event_ap_staconnected_t* event = (wifi_event_ap_staconnected_t*) event_data;
+                ESP_LOGI(TAG, "station "MACSTR" join, AID=%d",
+                        MAC2STR(event->mac), event->aid);
+            } else if (event_id == WIFI_EVENT_AP_STADISCONNECTED) {
+                wifi_event_ap_stadisconnected_t* event = (wifi_event_ap_stadisconnected_t*) event_data;
+                ESP_LOGI(TAG, "station "MACSTR" leave, AID=%d",
+                        MAC2STR(event->mac), event->aid);
+            }
+        }
+
         void setup( int16_t is_wifi_AP ){
             if ( !this->isWebServerOn ) {
                 this->isWebServerOn = 1;
 
+                esp_netif_init();
+                ESP_ERROR_CHECK(esp_event_loop_create_default());
+                esp_netif_create_default_wifi_ap();
+
                 // Initialize WiFi
                 wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
                 esp_wifi_init(&cfg);
+
+                ESP_ERROR_CHECK(
+                    esp_event_handler_instance_register(
+                        WIFI_EVENT,
+                        ESP_EVENT_ANY_ID,
+                        &wifi_event_handler,
+                        NULL,
+                        NULL
+                    )
+                );
 
                 #ifdef SPIFFS_H
                 this->ret = esp_vfs_spiffs_register(&g_states.conf);
@@ -42,38 +70,46 @@ class ESP_Server {
                 this->is_wifi_AP_value = is_wifi_AP;
                 if ( is_wifi_AP ) {
 
+                    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+                    esp_err_t err2 = esp_wifi_init(&cfg);
+                    Serial.println(err2);
+
                     Serial.println("Connecting on Access Point mode");
-                    Serial.printf("SSID: %s PWD: %s \n", g_states.AP_SSID, g_states.AP_PSW);
+                    
                     // Configure WiFi as an Access Point
-                    wifi_config_t ap_config = {
-                        .ap = {
-                            .ssid = {0},
-                            .password = {0},
-                            .max_connection = 4, // Maximum number of clients
-                            .authmode = WIFI_AUTH_WPA_WPA2_PSK
-                        },
-                    };
+                    wifi_config_t ap_config;
+                    ap_config.ap.max_connection = 4;
+                    ap_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
 
                     // Copy the SSID and password strings to the configuration
-                    strncpy((char*)ap_config.sta.ssid, g_states.AP_SSID, sizeof(ap_config.sta.ssid) - 1);
-                    strncpy((char*)ap_config.sta.password, g_states.AP_PSW, sizeof(ap_config.sta.password) - 1);
+                    strncpy((char*)ap_config.ap.ssid, "teste", sizeof(ap_config.ap.ssid) - 1);
+                    strncpy((char*)ap_config.ap.password, "teste", sizeof(ap_config.ap.password) - 1);
+
+
+                    Serial.printf("SSID: %s PWD: %s     ", ap_config.ap.ssid, ap_config.ap.password);
 
                     esp_wifi_set_mode(WIFI_MODE_AP);
                     esp_wifi_set_config(WIFI_IF_AP, &ap_config);
 
                     // Wait for WiFi to connect
-                    uint32_t connect_timeout_ms = 10000; // Adjust as needed
+                    uint32_t connect_timeout_ms = 60000; // Adjust as needed
                     TickType_t start_ticks = xTaskGetTickCount();
                     wifi_ap_record_t wifi_info;
 
+                    
+                    esp_wifi_start();
+
+                    int err;
                     while (1) {
-                        if (esp_wifi_sta_get_ap_info(&wifi_info) == ESP_OK) {
+                        err = esp_wifi_sta_get_ap_info(&wifi_info);
+                        if ( err == ESP_OK) {
                             break; // Exit the loop once we've printed the IP address
                         }
 
                         // Check for a timeout
                         if ((xTaskGetTickCount() - start_ticks) * portTICK_PERIOD_MS >= connect_timeout_ms) {
                             Serial.println("        [FAIL]");
+                            Serial.println(esp_err_to_name(err));
                             this->turnESPServerOff();
                             return;
                         }
@@ -83,19 +119,12 @@ class ESP_Server {
 
                     Serial.println("       [OK]");
 
-                    Serial.print("Connected AP ");
-
                 } else {
                     Serial.println("Connecting on Station mode");
-                    Serial.printf("SSID: %s PWD: %s \n", g_states.STA_SSID, g_states.STA_PSW);
+                    Serial.printf("SSID: %s PWD: %s     ", g_states.STA_SSID, g_states.STA_PSW);
 
                     // Configure WiFi as a Station
-                    wifi_config_t sta_config = {
-                        .sta = {
-                            .ssid = {0},
-                            .password = {0},
-                        },
-                    };
+                    wifi_config_t sta_config;
 
                     // Copy the SSID and password strings to the configuration
                     strncpy((char*)sta_config.sta.ssid, g_states.STA_SSID, sizeof(sta_config.sta.ssid) - 1);
