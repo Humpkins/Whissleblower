@@ -10,7 +10,7 @@
     "MQTTProject": "Whistleblower",
     "STA_SSID" : "Unicon 2.4_Juliana",
     "STA_PSW" : "99061012",
-    "AP_SSID" : "TCU_TCC_Mateus",
+    "AP_SSID" : "Whistleblower",
     "AP_PSW" : "tcc_mateus",
     "mDNS": "whistleblower"
 }

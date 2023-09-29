@@ -389,72 +389,70 @@ void setup() {
     if ( !Serial ) Serial.begin(115200);
     while( !Serial );
 
-    ESPServer.setup(true);
+    //  Clear flash memory and reset
+    utilities.ESPClearFlash();
 
-    // //  Clear flash memory and reset
-    // utilities.ESPClearFlash();
-
-    // analogSetWidth(12);
-    // analogSetPinAttenuation(ESP_BAT_PIN, ADC_11db);
+    analogSetWidth(12);
+    analogSetPinAttenuation(ESP_BAT_PIN, ADC_11db);
     
-    // pinMode(LED_PIN, OUTPUT);
+    pinMode(LED_PIN, OUTPUT);
 
-    // // Load the configdata saved on SPIFFS
-    // g_states.loadConfigFromSPIFFS();
+    // Load the configdata saved on SPIFFS
+    g_states.loadConfigFromSPIFFS();
 
-    // //  Handle crashed esp reboot loop
-    // AntiCrash.checkLastCrash();
+    //  Handle crashed esp reboot loop
+    AntiCrash.checkLastCrash();
 
-    // xModem = xSemaphoreCreateMutex();
-    // xSD = xSemaphoreCreateMutex();
+    xModem = xSemaphoreCreateMutex();
+    xSD = xSemaphoreCreateMutex();
 
-    // //  Sets up the datalloger
-    // sd_card.setup();
+    //  Sets up the datalloger
+    sd_card.setup();
 
-    // // Prints the current CPU frequency
-    // uint32_t freq = getCpuFrequencyMhz();
-    // Serial.print("Current CPU frequency: ");
-    // Serial.print(freq);
-    // Serial.println(" MHz");
+    // Prints the current CPU frequency
+    uint32_t freq = getCpuFrequencyMhz();
+    Serial.print("Current CPU frequency: ");
+    Serial.print(freq);
+    Serial.println(" MHz");
 
-    // // Sets up the SIM7000G GPRS class
-    // sim_7000g.setup();
-    // // Sets up the MQTT class
-    // mqtt_com.setup();
-    // // Sets up the OTA class
-    // OTA.setup();
+    // Sets up the SIM7000G GPRS class
+    sim_7000g.setup();
+    // Sets up the MQTT class
+    mqtt_com.setup();
+    // Sets up the OTA class
+    OTA.setup();
 
-    // //  Sets up the MPU6050 class
-    // MPU_DATA.setup();
-    // //  Sets up the TJA1050 class
-    // TJA_DATA.setup();
+    //  Sets up the MPU6050 class
+    MPU_DATA.setup();
+    //  Sets up the TJA1050 class
+    TJA_DATA.setup();
 
-    // // //  Sendo good morning message
-    // char topic_Wake[ sizeof(g_states.MQTTProject) + sizeof(g_states.MQTTclientID) + sizeof(g_states.MQTTWakeTopic) + 3 ];
-    // sprintf( topic_Wake, "%s/%s/%s", g_states.MQTTProject, g_states.MQTTclientID, g_states.MQTTWakeTopic );
-    // if (mqtt.publish( topic_Wake, "Just woke. Good morning!" )){ sim_7000g.last_message = xTaskGetTickCount(); }
+    // //  Sendo good morning message
+    char topic_Wake[ sizeof(g_states.MQTTProject) + sizeof(g_states.MQTTclientID) + sizeof(g_states.MQTTWakeTopic) + 3 ];
+    sprintf( topic_Wake, "%s/%s/%s", g_states.MQTTProject, g_states.MQTTclientID, g_states.MQTTWakeTopic );
+    if (mqtt.publish( topic_Wake, "Just woke. Good morning!" )){ sim_7000g.last_message = xTaskGetTickCount(); }
 
-    // xTaskCreatePinnedToCore( TaskMediumFreq, "Medium frequency data task", 4096, NULL, 2, &xMediumFreq, 0 );
-    // xTaskCreatePinnedToCore( TaskHighFreq, "High frequency data task", 2048, NULL, 2, &xHighFreq, 0 );
-    // // xTaskCreatePinnedToCore( TaskWatchers, "Watcher for state warnings", 2048, NULL, 3, NULL, 0 );
-    // xTaskCreatePinnedToCore( TasklogData, "Logs data to SD card", 5120, NULL, 3, &xLog, 0 );
+    xTaskCreatePinnedToCore( TaskMediumFreq, "Medium frequency data task", 4096, NULL, 2, &xMediumFreq, 0 );
+    xTaskCreatePinnedToCore( TaskHighFreq, "High frequency data task", 2048, NULL, 2, &xHighFreq, 0 );
+    // xTaskCreatePinnedToCore( TaskWatchers, "Watcher for state warnings", 2048, NULL, 3, NULL, 0 );
+    xTaskCreatePinnedToCore( TasklogData, "Logs data to SD card", 5120, NULL, 3, &xLog, 0 );
 
-    // xTaskCreatePinnedToCore( taskSendOverMQTT, "MQTT data delivery task", 5120, NULL, 0, &xMQTTDeliver, 1 );
-    // xTaskCreatePinnedToCore( taskLoopClientMQTT, "MQTT client loop", 9216, NULL, 1, &xMQTTLoop, 1 );
-    // xTaskCreatePinnedToCore( TaskESPServerObserver, "Observe if ESPServer timesout", 2048, NULL, 1, &xESPServer, 1 );
-    // // xTaskCreatePinnedToCore( vontageInput, "Observe voltage input removal", 4096, NULL, 1, &xVoltageIn, 1 );
+    xTaskCreatePinnedToCore( taskSendOverMQTT, "MQTT data delivery task", 5120, NULL, 0, &xMQTTDeliver, 1 );
+    xTaskCreatePinnedToCore( taskLoopClientMQTT, "MQTT client loop", 9216, NULL, 1, &xMQTTLoop, 1 );
+    xTaskCreatePinnedToCore( TaskESPServerObserver, "Observe if ESPServer timesout", 2048, NULL, 1, &xESPServer, 1 );
+    // xTaskCreatePinnedToCore( vontageInput, "Observe voltage input removal", 4096, NULL, 1, &xVoltageIn, 1 );
 
-    // xTaskCreatePinnedToCore( taskUpdateTimesTamp, "Update board's Timestamp", 2048, NULL, 4, &xRTC, 0 );
-    // xTaskCreatePinnedToCore( heartBeat, "Blinks the LED", 1024, NULL, 1, &xHeartBeat, 0 );
-    // xTaskCreatePinnedToCore( taskWebClientObserver, "Watch for web client's timeout", 1024, NULL, 1, &xClientsHeartbeat, 0 );
-    // xTaskCreatePinnedToCore( taskConnectionStatus, "Check for internet connection", 2048, NULL, 1, NULL, 0 );
+    xTaskCreatePinnedToCore( taskUpdateTimesTamp, "Update board's Timestamp", 2048, NULL, 4, &xRTC, 0 );
+    xTaskCreatePinnedToCore( heartBeat, "Blinks the LED", 1024, NULL, 1, &xHeartBeat, 0 );
+    xTaskCreatePinnedToCore( taskWebClientObserver, "Watch for web client's timeout", 1024, NULL, 1, &xClientsHeartbeat, 0 );
+    xTaskCreatePinnedToCore( taskConnectionStatus, "Check for internet connection", 2048, NULL, 1, NULL, 0 );
     
 
-    // vTaskDelay( 200 / portTICK_PERIOD_MS );
+    vTaskDelay( 200 / portTICK_PERIOD_MS );
 
-    // //  Check for previous runtime events
-    // SDlogger.autoStartLog();
-    // wb.autoStartWhistleblowing();
+    //  Check for previous runtime events
+    SDlogger.autoStartLog();
+    wb.autoStartWhistleblowing();
 
     
 }

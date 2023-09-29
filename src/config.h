@@ -68,7 +68,7 @@ class states{
 
     char HOST [21] = "whistleblower";
 
-    char AP_SSID [21] = "TCU_TCC_Mateus";
+    char AP_SSID [21] = "Whistleblower";
     char AP_PSW [21] = "tcc_mateus";
 
     char STA_SSID [21] = "Unicon 2.4_Juliana";

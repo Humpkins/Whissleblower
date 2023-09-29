@@ -3,6 +3,9 @@
     #include <sys/unistd.h>
     #include <sys/stat.h>
 
+    #include <SD.h>
+
+
     #include "esp_system.h"
     #include "esp_spi_flash.h"
     #include "esp_log.h"
@@ -21,11 +24,16 @@
     class SDCard {
         private:
             int16_t mountFailMax = 5;
+            int8_t mountFailCount;
             esp_err_t ret;
+            int8_t idfSD = 0;
+            int8_t arduinoSD = 0;
 
         public:
 
             int mountSD(){
+
+                if ( this->arduinoSD ) this->unmountSD_lib();
 
                 int wasSerialOpen = 0;
                 if ( Serial ) {
@@ -54,7 +62,7 @@
                     .max_transfer_sz = 2000,
                 };
 
-                ret = spi_bus_initialize(SPI2_HOST, &bus_cfg, SDSPI_DEFAULT_DMA);
+                this->ret = spi_bus_initialize(SPI2_HOST, &bus_cfg, SDSPI_DEFAULT_DMA);
 
                 sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
                 slot_config.gpio_cs = SS;
@@ -69,8 +77,10 @@
                     if ( wasSerialOpen ) Serial.begin(115200);
                     while( !Serial );
 
-                    if  ( this->ret == ESP_ERR_INVALID_STATE ) return 1;
-                    if  ( this->ret == ESP_OK ) return 1;
+                    if  ( this->ret == ESP_ERR_INVALID_STATE || this->ret == ESP_OK) {
+                        this->idfSD = 1;
+                        return 1;
+                    }
 
                     vTaskDelay( 750 / portTICK_PERIOD_MS );
 
@@ -84,8 +94,55 @@
             }
 
             int unmountSD(){
-                esp_vfs_fat_sdmmc_unmount();
-                return 1;
+                if ( this->idfSD ){
+                    esp_vfs_fat_sdmmc_unmount();
+                    this->idfSD = 0;
+                    return 1;
+                }
+                return 0;
+            }
+
+            int mountSD_lib(){
+                
+                if ( this->idfSD ) this->unmountSD();
+
+                //  Reset the fail count
+                this->mountFailCount  = 0;
+
+                int wasSerialOpen = 0;
+                if ( Serial ) {
+                    wasSerialOpen = 1;
+                    Serial.end();
+                }
+
+                //  If the card is mounted, simply return true. If isn't, re-mount SD
+                if ( SD.exists("/") ) {
+                    if ( wasSerialOpen ) Serial.begin(115200);
+                    this->arduinoSD = 1;
+                    return 1;
+                } else {
+                    if ( wasSerialOpen ) Serial.begin(115200);
+
+                    for ( int i = 0; i < this->mountFailMax; i++ ) {
+
+                        //  Mount the SD card
+                        if ( SD.begin( SS, SPI ) ) return 1;
+
+                        vTaskDelay( 750 / portTICK_PERIOD_MS );
+                    }
+
+                    return 0;
+                }
+            }
+
+            int unmountSD_lib(){
+                if ( this->arduinoSD ){
+                    SD.end();
+                    this->mountSD();
+                    this->arduinoSD = 0;
+                    return 1;
+                }
+                return 0;
             }
 
             void setup(){
